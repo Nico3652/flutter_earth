@@ -546,7 +546,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
       initMeshTexture(mesh);
       meshList.add(mesh);
     }
-    if (widget.showPole) {
+    if (widget.showPole && northPoleImage != null) {
       meshList..add(buildPoleMesh(math.pi / 2, radians(84), 5, northPoleImage!));
       meshList.add(buildPoleMesh(-radians(84), -math.pi / 2, 5, southPoleImage!));
     }
