@@ -259,7 +259,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
   final double tileHeight = 256;
   final int minZoom = 2;
   final int maxZoom = 21;
-  List<HashMap<int, Tile>>? tiles;
+  List<HashMap<int, Tile?>>? tiles;
   Image? northPoleImage;
   Image? southPoleImage;
 
@@ -284,10 +284,10 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     for (int z = 4; z < tiles!.length; z++) {
       if (z != currentZoom) {
         final values = tiles![z].values;
-        for (Tile t in values) {
-          t.status = TileStatus.clear;
-          t.image = null;
-          t.future = null;
+        for (Tile? t in values) {
+          t!.status = TileStatus.clear;
+          t!.image = null;
+          t!.future = null;
         }
       }
     }
@@ -716,7 +716,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    tiles = [];
+    tiles = List.generate(maxZoom+1, (index) => HashMap<int, Tile>());
     for (var i = 0; i <= maxZoom; i++) tiles![i] = HashMap<int, Tile>();
 
     zoom = math.log(widget.radius! / _radius) / math.ln2;
