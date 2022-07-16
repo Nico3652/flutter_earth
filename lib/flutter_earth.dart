@@ -167,17 +167,17 @@ class Mesh {
     this.vertexCount = 0;
     this.indexCount = 0;
   }
-  Float32List positions;
-  Float32List positionsZ;
-  Float32List texcoords;
-  Int32List colors;
-  Uint16List indices;
-  int vertexCount;
-  int indexCount;
-  Image texture;
-  double x;
-  double y;
-  double z;
+  Float32List? positions;
+  Float32List? positionsZ;
+  Float32List? texcoords;
+  Int32List? colors;
+  Uint16List? indices;
+  int vertexCount=0;
+  int indexCount=0;
+  Image? texture;
+  double? x;
+  double? y;
+  double? z;
 }
 
 enum TileStatus {
@@ -196,8 +196,8 @@ class Tile {
   /// zoom level
   int z;
   TileStatus status = TileStatus.clear;
-  Image image;
-  Future<Image> future;
+  Image? image;
+  Future<Image>? future;
 }
 
 typedef TileCallback = void Function(Tile tile);
@@ -206,7 +206,7 @@ typedef void CameraPositionCallback(LatLon latLon, double zoom);
 
 class FlutterEarth extends StatefulWidget {
   FlutterEarth({
-    Key key,
+    Key? key,
     this.url,
     this.radius,
     this.maxVertexCount = 5000,
@@ -216,56 +216,56 @@ class FlutterEarth extends StatefulWidget {
     this.onTileStart,
     this.onTileEnd,
   }) : super(key: key);
-  final String url;
-  final double radius;
+  final String? url;
+  final double? radius;
   final int maxVertexCount;
   final bool showPole;
-  final TileCallback onTileStart;
-  final TileCallback onTileEnd;
-  final MapCreatedCallback onMapCreated;
-  final CameraPositionCallback onCameraMove;
+  final TileCallback? onTileStart;
+  final TileCallback? onTileEnd;
+  final MapCreatedCallback? onMapCreated;
+  final CameraPositionCallback? onCameraMove;
 
   @override
   _FlutterEarthState createState() => _FlutterEarthState();
 }
 
 class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMixin {
-  FlutterEarthController _controller;
-  double width;
-  double height;
-  double zoom;
-  double _lastZoom;
-  Offset _lastFocalPoint;
-  Quaternion _lastQuaternion;
-  Vector3 _lastRotationAxis;
-  double _lastGestureScale;
-  double _lastGestureRatation;
+  FlutterEarthController? _controller;
+  double? width;
+  double? height;
+  double? zoom;
+  double? _lastZoom;
+  Offset? _lastFocalPoint;
+  Quaternion? _lastQuaternion;
+  Vector3? _lastRotationAxis;
+  double? _lastGestureScale;
+  double? _lastGestureRatation;
   int _lastGestureTime = 0;
 
   final double _radius = 256 / (2 * math.pi);
-  double get radius => _radius * math.pow(2, zoom);
-  int get zoomLevel => zoom.round().clamp(minZoom, maxZoom);
+  double get radius => _radius * math.pow(2, zoom!);
+  int get zoomLevel => zoom!.round().clamp(minZoom, maxZoom);
   LatLon get position => quaternionToLatLon(quaternion);
   EulerAngles get eulerAngles => quaternionToEulerAngles(quaternion);
 
   Quaternion quaternion = Quaternion.identity();
-  AnimationController animController;
-  Animation<double> panAnimation;
-  Animation<double> riseAnimation;
-  Animation<double> zoomAnimation;
+  AnimationController? animController;
+  Animation<double>? panAnimation;
+  Animation<double>? riseAnimation;
+  Animation<double>? zoomAnimation;
   double _panCurveEnd = 0;
 
   final double tileWidth = 256;
   final double tileHeight = 256;
   final int minZoom = 2;
   final int maxZoom = 21;
-  List<HashMap<int, Tile>> tiles;
-  Image northPoleImage;
-  Image southPoleImage;
+  List<HashMap<int, Tile>>? tiles;
+  Image? northPoleImage;
+  Image? southPoleImage;
 
   Vector3 canvasPointToVector3(Offset point) {
-    final x = point.dx - width / 2;
-    final y = point.dy - height / 2;
+    final x = point.dx - width! / 2;
+    final y = point.dy - height! / 2;
     var z = radius * radius - x * x - y * y;
     if (z < 0) z = 0;
     z = -math.sqrt(z);
@@ -281,9 +281,9 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
   void clearCache() async {
     final int currentZoom = zoomLevel;
-    for (int z = 4; z < tiles.length; z++) {
+    for (int z = 4; z < tiles!.length; z++) {
       if (z != currentZoom) {
-        final values = tiles[z].values;
+        final values = tiles![z].values;
         for (Tile t in values) {
           t.status = TileStatus.clear;
           t.image = null;
@@ -295,12 +295,12 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
   Future<Tile> loadTileImage(Tile tile) async {
     tile.status = TileStatus.pending;
-    if (widget.onTileStart != null) widget.onTileStart(tile);
+    if (widget.onTileStart != null) widget.onTileStart!(tile);
     if (tile.status == TileStatus.ready) return tile;
 
     tile.status = TileStatus.fetching;
     final c = Completer<Image>();
-    final url = widget.url.replaceAll('{z}', '${tile.z}').replaceAll('{x}', '${tile.x}').replaceAll('{y}', '${tile.y}');
+    final url = widget.url!.replaceAll('{z}', '${tile.z}').replaceAll('{x}', '${tile.x}').replaceAll('{y}', '${tile.y}');
     final networkImage = NetworkImage(url);
     final imageStream = networkImage.resolve(ImageConfiguration());
     imageStream.addListener(
@@ -310,7 +310,9 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     );
     tile.image = await c.future;
     tile.status = TileStatus.ready;
-    if (widget.onTileEnd != null) widget.onTileEnd(tile);
+    if (widget.onTileEnd != null) {
+      widget.onTileEnd!(tile);
+    }
     if(mounted) setState(() {});
 
     return tile;
@@ -318,10 +320,10 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
   Tile getTile(int x, int y, int z) {
     final key = (x << 32) + y;
-    var tile = tiles[z][key];
+    var tile = tiles![z][key];
     if (tile == null) {
       tile = Tile(x, y, z);
-      tiles[z][key] = tile;
+      tiles![z][key] = tile;
     }
     if (tile.status == TileStatus.clear) {
       loadTileImage(tile);
@@ -332,18 +334,18 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
         final x1 = (x * math.pow(2, i - z)).toInt();
         final y1 = (y * math.pow(2, i - z)).toInt();
         final key1 = (x1 << 32) + y1;
-        final tile1 = tiles[i][key1];
-        if (tile1?.status == TileStatus.ready) return tile1;
+        final tile1 = tiles![i][key1];
+        if (tile1?.status == TileStatus.ready) return tile1!;
       }
     }
     return tile;
   }
 
   List<Offset> clipTiles(Rect clipRect, double radius) {
-    final list = List<Offset>();
-    final scale = math.pow(2.0, zoomLevel);
+    final list = <Offset>[];
+    final double scale = math.pow(2.0, zoomLevel).floorToDouble();
     final observed = HashMap<int, int>();
-    final lastKeys = List<int>(clipRect.width ~/ 10 + 1);
+    List<int> lastKeys = [(clipRect.width ~/ 10 + 1)];
     for (var y = clipRect.top; y < clipRect.bottom; y += 10.0) {
       var i = 0;
       for (var x = clipRect.left; x < clipRect.right; x += 10.0) {
@@ -364,16 +366,16 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
   }
 
   void initMeshTexture(Mesh mesh) {
-    final tile = getTile(mesh.x ~/ tileWidth, mesh.y ~/ tileHeight, zoomLevel);
+    final Tile tile = getTile(mesh.x! ~/ tileWidth, mesh.y! ~/ tileHeight, zoomLevel);
     if (tile.status == TileStatus.ready) {
       //Is zoomed tile?
       if (tile.z != zoomLevel) {
-        final Float32List texcoords = mesh.texcoords;
+        final Float32List texcoords = mesh.texcoords!;
         final int texcoordCount = texcoords.length;
-        final double scale = math.pow(2, tile.z - zoomLevel);
+        final double scale = math.pow(2, tile.z - zoomLevel).floorToDouble();
         for (int i = 0; i < texcoordCount; i += 2) {
-          texcoords[i] = (mesh.x + texcoords[i]) * scale - tile.x * tileWidth;
-          texcoords[i + 1] = (mesh.y + texcoords[i + 1]) * scale - tile.y * tileHeight;
+          texcoords[i] = (mesh.x! + texcoords[i]) * scale - tile.x * tileWidth;
+          texcoords[i + 1] = (mesh.y! + texcoords[i + 1]) * scale - tile.y * tileHeight;
         }
       }
       mesh.texture = tile.image;
@@ -382,9 +384,9 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
   Mesh initMeshFaces(Mesh mesh, int subdivisionsX, int subdivisionsY) {
     final int faceCount = subdivisionsX * subdivisionsY * 2;
-    final List<Polygon> faces = List<Polygon>(faceCount);
-    final Float32List positionsZ = mesh.positionsZ;
-    int indexOffset = mesh.indexCount;
+    final List<Polygon?> faces = List.generate(faceCount, (index) => null);
+    final Float32List positionsZ = mesh.positionsZ!;
+    int indexOffset = mesh.indexCount!;
     double z = 0.0;
     for (var j = 0; j < subdivisionsY; j++) {
       int k1 = j * (subdivisionsX + 1);
@@ -405,10 +407,10 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     }
     mesh.indexCount += faceCount;
 
-    faces.sort((Polygon a, Polygon b) {
+    faces.sort((Polygon? a, Polygon? b) {
       // return b.sumOfZ.compareTo(a.sumOfZ);
-      final double az = a.sumOfZ;
-      final double bz = b.sumOfZ;
+      final double az = a!.sumOfZ;
+      final double bz = b!.sumOfZ;
       if (bz > az) return 1;
       if (bz < az) return -1;
       return 0;
@@ -416,13 +418,13 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
     // convert Polygon list to Uint16List
     final int indexCount = faces.length;
-    final Uint16List indices = mesh.indices;
+    final Uint16List indices = mesh.indices!;
     for (int i = 0; i < indexCount; i++) {
       final int index0 = i * 3;
       final int index1 = index0 + 1;
       final int index2 = index0 + 2;
-      final Polygon polygon = faces[i];
-      indices[index0] = polygon.vertex0;
+      final Polygon? polygon = faces[i];
+      indices[index0] = polygon!.vertex0;
       indices[index1] = polygon.vertex1;
       indices[index2] = polygon.vertex2;
     }
@@ -437,15 +439,15 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     //Use matrix rotation is more efficient.
     final matrix = q.asRotationMatrix()..invert();
 
-    final int imageWidth = image?.width ?? 1;
-    final int imageHeight = image?.height ?? 1;
+    final int imageWidth = image.width ?? 1;
+    final int imageHeight = image.height ?? 1;
     final int subdivisionsX = subdivisions * (imageWidth ~/ imageHeight);
     final int vertexCount = (subdivisions + 1) * (subdivisionsX + 1);
     final int faceCount = subdivisions * subdivisionsX * 2;
     final Mesh mesh = Mesh(vertexCount, faceCount);
-    final Float32List texcoords = mesh.texcoords;
-    final Float32List positions = mesh.positions;
-    final Float32List positionsZ = mesh.positionsZ;
+    final Float32List texcoords = mesh.texcoords!;
+    final Float32List positions = mesh.positions!;
+    final Float32List positionsZ = mesh.positionsZ!;
     int vertexIndex = 0;
     int vertexZIndex = 0;
     int texcoordIndex = 0;
@@ -487,9 +489,9 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     final int vertexCount = (subdivisions + 1) * (subdivisions + 1);
     final int faceCount = subdivisions * subdivisions * 2;
     final Mesh mesh = Mesh(vertexCount, faceCount);
-    final Float32List texcoords = mesh.texcoords;
-    final Float32List positions = mesh.positions;
-    final Float32List positionsZ = mesh.positionsZ;
+    final Float32List texcoords = mesh.texcoords!;
+    final Float32List positions = mesh.positions!;
+    final Float32List positionsZ = mesh.positionsZ!;
     int vertexIndex = 0;
     int vertexZIndex = 0;
     int texcoordIndex = 0;
@@ -521,8 +523,8 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
   }
 
   void drawTiles(Canvas canvas, Size size) {
-    final tiles = clipTiles(Rect.fromLTWH(0, 0, width, height), radius);
-    final meshList = List<Mesh>();
+    final tiles = clipTiles(Rect.fromLTWH(0, 0, width!, height!), radius);
+    final meshList = <Mesh>[];
     final maxWidth = tileWidth * (1 << zoomLevel);
     final maxHeight = tileHeight * (1 << zoomLevel);
 
@@ -543,18 +545,18 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
       meshList.add(mesh);
     }
     if (widget.showPole) {
-      meshList..add(buildPoleMesh(math.pi / 2, radians(84), 5, northPoleImage));
-      meshList.add(buildPoleMesh(-radians(84), -math.pi / 2, 5, southPoleImage));
+      meshList..add(buildPoleMesh(math.pi / 2, radians(84), 5, northPoleImage!));
+      meshList.add(buildPoleMesh(-radians(84), -math.pi / 2, 5, southPoleImage!));
     }
 
     meshList.sort((Mesh a, Mesh b) {
-      return b.z.compareTo(a.z);
+      return b.z!.compareTo(a.z!);
     });
 
     for (var mesh in meshList) {
       final vertices = Vertices.raw(
         VertexMode.triangles,
-        mesh.positions,
+        mesh.positions!,
         textureCoordinates: mesh.texcoords,
         indices: mesh.indices,
       );
@@ -562,7 +564,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
       final paint = Paint();
       if (mesh.texture != null) {
         Float64List matrix4 = new Matrix4.identity().storage;
-        final shader = ImageShader(mesh.texture, TileMode.mirror, TileMode.mirror, matrix4);
+        final shader = ImageShader(mesh.texture!, TileMode.mirror, TileMode.mirror, matrix4);
         paint.shader = shader;
       }
       canvas.drawVertices(vertices, BlendMode.src, paint);
@@ -570,7 +572,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
-    animController.stop();
+    animController!.stop();
     _lastZoom = null;
     _lastFocalPoint = details.localFocalPoint;
     _lastQuaternion = quaternion;
@@ -585,12 +587,12 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
     if (_lastZoom == null) {
       // fixed scaling error caused by ScaleUpdate delay
-      _lastZoom = zoom - math.log(details.scale) / math.ln2;
+      _lastZoom = zoom! - math.log(details.scale) / math.ln2;
     } else {
-      zoom = _lastZoom + math.log(details.scale) / math.ln2;
+      zoom = _lastZoom! + math.log(details.scale) / math.ln2;
     }
 
-    final Vector3 oldCoord = canvasPointToVector3(_lastFocalPoint);
+    final Vector3 oldCoord = canvasPointToVector3(_lastFocalPoint!);
     final Vector3 newCoord = canvasPointToVector3(details.localFocalPoint);
     //var q = Quaternion.fromTwoVectors(newCoord, oldCoord); // It seems some issues with this 'fromTwoVectors' function.
     Quaternion q = quaternionFromTwoVectors(newCoord, oldCoord);
@@ -599,10 +601,10 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     if (axis.x != 0 && axis.y != 0 && axis.z != 0) _lastRotationAxis = axis;
 
     q *= Quaternion.axisAngle(Vector3(0, 0, 1.0), -details.rotation);
-    quaternion = _lastQuaternion * q; //quaternion A * B is not equal to B * A
+    quaternion = _lastQuaternion! * q; //quaternion A * B is not equal to B * A
 
     if (widget.onCameraMove != null) {
-      widget.onCameraMove(position, zoom);
+      widget.onCameraMove!(position, zoom!);
     }
     if(mounted) setState(() {});
   }
@@ -615,66 +617,66 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     if (distance == 0) return;
 
     if (DateTime.now().millisecondsSinceEpoch - _lastGestureTime < 300) {
-      if (_lastGestureScale != 1.0 && (_lastGestureScale - 1.0).abs() > _lastGestureRatation.abs()) {
+      if (_lastGestureScale != 1.0 && (_lastGestureScale! - 1.0).abs() > _lastGestureRatation!.abs()) {
         double radians = 3.0 * distance;
-        if (_lastGestureScale < 1.0) radians = -radians;
-        animController.duration = Duration(milliseconds: duration.toInt());
-        zoomAnimation = Tween<double>(begin: zoom, end: zoom + radians).animate(CurveTween(curve: Curves.decelerate).animate(animController));
+        if (_lastGestureScale! < 1.0) radians = -radians;
+        animController!.duration = Duration(milliseconds: duration.toInt());
+        zoomAnimation = Tween<double>(begin: zoom, end: zoom! + radians).animate(CurveTween(curve: Curves.decelerate).animate(animController!));
         panAnimation = null;
         riseAnimation = null;
-        animController.reset();
-        animController.forward();
+        animController!.reset();
+        animController!.forward();
         return;
       } else if (_lastGestureRatation != 0) {
         double radians = 2.0 * math.pi * distance;
-        if (_lastGestureRatation > 0) radians = -radians;
+        if (_lastGestureRatation! > 0) radians = -radians;
         _lastRotationAxis = Vector3(0, 0, 1.0);
-        animController.duration = Duration(milliseconds: duration.toInt());
-        panAnimation = Tween<double>(begin: 0, end: radians).animate(CurveTween(curve: Curves.decelerate).animate(animController));
+        animController!.duration = Duration(milliseconds: duration.toInt());
+        panAnimation = Tween<double>(begin: 0, end: radians).animate(CurveTween(curve: Curves.decelerate).animate(animController!));
         riseAnimation = null;
         zoomAnimation = null;
-        animController.reset();
-        animController.forward();
+        animController!.reset();
+        animController!.forward();
         return;
       }
     }
 
     double radians = 1000 * distance / radius;
-    final Offset center = Offset(width / 2, height / 2);
+    final Offset center = Offset(width! / 2, height! / 2);
     final Vector3 oldCoord = canvasPointToVector3(center);
     final Vector3 newCoord = canvasPointToVector3(center + details.velocity.pixelsPerSecond / distance);
     Quaternion q = quaternionFromTwoVectors(newCoord, oldCoord);
     final Vector3 axis = quaternionAxis(q);
     if (axis.x != 0 && axis.y != 0 && axis.z != 0) _lastRotationAxis = axis;
 
-    animController.duration = Duration(milliseconds: duration.toInt());
-    panAnimation = Tween<double>(begin: 0, end: radians).animate(CurveTween(curve: Curves.decelerate).animate(animController));
+    animController!.duration = Duration(milliseconds: duration.toInt());
+    panAnimation = Tween<double>(begin: 0, end: radians).animate(CurveTween(curve: Curves.decelerate).animate(animController!));
     riseAnimation = null;
     zoomAnimation = null;
-    animController.reset();
-    animController.forward();
+    animController!.reset();
+    animController!.forward();
   }
 
   void _handleDoubleTap() {
     _lastZoom = zoom;
-    animController.duration = Duration(milliseconds: 600);
-    zoomAnimation = Tween<double>(begin: zoom, end: zoom + 1.0).animate(CurveTween(curve: Curves.decelerate).animate(animController));
+    animController!.duration = Duration(milliseconds: 600);
+    zoomAnimation = Tween<double>(begin: zoom, end: zoom! + 1.0).animate(CurveTween(curve: Curves.decelerate).animate(animController!));
     panAnimation = null;
     riseAnimation = null;
-    animController.reset();
-    animController.forward();
+    animController!.reset();
+    animController!.forward();
   }
 
-  void animateCamera({LatLon newLatLon, double riseZoom, double fallZoom, double panSpeed = 1000.0, double riseSpeed = 1.0, double fallSpeed = 1.0}) {
+  void animateCamera({required LatLon newLatLon, required double riseZoom, required double fallZoom, double panSpeed = 1000.0, double riseSpeed = 1.0, double fallSpeed = 1.0}) {
     double panTime = 0;
     double riseTime = 0;
     double fallTime = 0;
-    if (riseZoom != null) riseTime = Duration.millisecondsPerSecond * (riseZoom - zoom).abs() / riseSpeed;
-    riseZoom ??= zoom;
+    if (riseZoom != null) riseTime = Duration.millisecondsPerSecond * (riseZoom - zoom!).abs() / riseSpeed;
+    riseZoom ??= zoom!;
     if (fallZoom != null) fallTime = Duration.millisecondsPerSecond * (fallZoom - riseZoom).abs() / fallSpeed;
     fallZoom ??= riseZoom;
 
-    double panRadians;
+    double panRadians = 0;
     if (newLatLon != null) {
       final oldEuler = quaternionToEulerAngles(quaternion);
       final newEuler = latLonToEulerAngles(newLatLon);
@@ -693,48 +695,48 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     }
 
     int duration = (riseTime + panTime + fallTime).ceil();
-    animController.duration = Duration(milliseconds: duration);
+    animController!.duration = Duration(milliseconds: duration);
     final double riseCurveEnd = riseTime / duration;
     riseAnimation = Tween<double>(begin: zoom, end: riseZoom).animate(
-      CurveTween(curve: Interval(0, riseCurveEnd, curve: Curves.ease)).animate(animController),
+      CurveTween(curve: Interval(0, riseCurveEnd, curve: Curves.ease)).animate(animController!),
     );
     final double panCurveEnd = riseCurveEnd + panTime / duration;
     _panCurveEnd = panCurveEnd;
     panAnimation = Tween<double>(begin: 0, end: panRadians).animate(
-      CurveTween(curve: Interval(riseCurveEnd, panCurveEnd, curve: Curves.ease)).animate(animController),
+      CurveTween(curve: Interval(riseCurveEnd, panCurveEnd, curve: Curves.ease)).animate(animController!),
     );
     final double fallCurveEnd = 1.0;
     zoomAnimation = Tween<double>(begin: riseZoom, end: fallZoom).animate(
-      CurveTween(curve: Interval(panCurveEnd, fallCurveEnd, curve: Curves.ease)).animate(animController),
+      CurveTween(curve: Interval(panCurveEnd, fallCurveEnd, curve: Curves.ease)).animate(animController!),
     );
-    animController.reset();
-    animController.forward();
+    animController!.reset();
+    animController!.forward();
   }
 
   @override
   void initState() {
     super.initState();
-    tiles = List(maxZoom + 1);
-    for (var i = 0; i <= maxZoom; i++) tiles[i] = HashMap<int, Tile>();
+    tiles = [];
+    for (var i = 0; i <= maxZoom; i++) tiles![i] = HashMap<int, Tile>();
 
-    zoom = math.log(widget.radius / _radius) / math.ln2;
+    zoom = math.log(widget.radius! / _radius) / math.ln2;
     _lastRotationAxis = Vector3(0, 0, 1.0);
 
     animController = AnimationController(vsync: this)
       ..addListener(() {
         if(mounted) setState(() {
-          if (!animController.isCompleted) {
+          if (!animController!.isCompleted) {
             if (panAnimation != null) {
-              final q = Quaternion.axisAngle(_lastRotationAxis, panAnimation.value);
-              quaternion = _lastQuaternion * q;
+              final q = Quaternion.axisAngle(_lastRotationAxis!, panAnimation!.value);
+              quaternion = _lastQuaternion! * q;
             }
             if (riseAnimation != null) {
-              if (animController.value < _panCurveEnd) zoom = riseAnimation.value;
+              if (animController!.value < _panCurveEnd) zoom = riseAnimation!.value;
             }
             if (zoomAnimation != null) {
-              if (animController.value >= _panCurveEnd) zoom = zoomAnimation.value;
+              if (animController!.value >= _panCurveEnd) zoom = zoomAnimation!.value;
             }
-            if (widget.onCameraMove != null) widget.onCameraMove(position, zoom);
+            if (widget.onCameraMove != null) widget.onCameraMove!(position, zoom!);
           } else {
             _panCurveEnd = 0;
           }
@@ -743,7 +745,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
     _controller = FlutterEarthController(this);
     if (widget.onMapCreated != null) {
-      widget.onMapCreated(_controller);
+      widget.onMapCreated!(_controller!);
     }
 
     loadImageFromAsset('packages/flutter_earth/assets/google_map_north_pole.png').then((Image value) => northPoleImage = value);
@@ -752,7 +754,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
 
   @override
   void dispose() {
-    animController.dispose();
+    animController!.dispose();
     super.dispose();
   }
 
@@ -803,12 +805,12 @@ class FlutterEarthController {
   Quaternion get quaternion => _state.quaternion;
   EulerAngles get eulerAngles => _state.eulerAngles;
   LatLon get position => _state.position;
-  double get zoom => _state.zoom;
-  bool get isAnimating => _state.animController.isAnimating;
+  double get zoom => _state.zoom!;
+  bool get isAnimating => _state.animController!.isAnimating;
 
   void clearCache() => _state.clearCache();
 
-  void animateCamera({LatLon newLatLon, double riseZoom, double fallZoom, double panSpeed = 10.0, double riseSpeed = 1.0, double fallSpeed = 1.0}) {
+  void animateCamera({required LatLon newLatLon, required double riseZoom, required double fallZoom, double panSpeed = 10.0, double riseSpeed = 1.0, double fallSpeed = 1.0}) {
     _state.animateCamera(newLatLon: newLatLon, riseZoom: riseZoom, fallZoom: fallZoom, panSpeed: panSpeed, riseSpeed: riseSpeed, fallSpeed: fallSpeed);
   }
 }
