@@ -358,7 +358,9 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
           observed[key] = 0;
           list.add(Offset(point.dx.truncateToDouble(), point.dy.truncateToDouble()));
         }
-        lastKeys[i] = key;
+        if(i < lastKeys.length) {
+          lastKeys[i] = key;
+        }
         i++;
       }
     }
