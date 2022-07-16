@@ -345,7 +345,7 @@ class _FlutterEarthState extends State<FlutterEarth> with TickerProviderStateMix
     final list = <Offset>[];
     final double scale = math.pow(2.0, zoomLevel).floorToDouble();
     final observed = HashMap<int, int>();
-    List<int> lastKeys = [(clipRect.width ~/ 10 + 1)];
+    List<int> lastKeys = List.generate((clipRect.width ~/ 10 + 1), (index) => 0);
     for (var y = clipRect.top; y < clipRect.bottom; y += 10.0) {
       var i = 0;
       for (var x = clipRect.left; x < clipRect.right; x += 10.0) {
